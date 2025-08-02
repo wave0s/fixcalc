@@ -223,8 +223,7 @@ function updateHistoryDisplay() {
   if (calculatorHistory.length === 0) {
     historyContent.innerHTML = `
             <div class="no-history">
-                <p>No calculations yet</p>
-                <p class="sub-text">Your calculation history will appear here</p>
+                <p>Null</p>
             </div>
         `
     return
