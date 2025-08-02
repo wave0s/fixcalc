@@ -4,12 +4,11 @@ var historyContent = document.querySelector("#history-content")
 var calculatorHistory = []
 
 screen.value = "0"
-
-// Keys eventlistener
 document.addEventListener("keydown", (event) => {
   const key = event.key
+
   if (
-    "0123456789+-*/.=()".includes(key) ||
+    "0123456789+-*/.=()^".includes(key) ||
     key === "Enter" ||
     key === "Backspace" ||
     key === "Delete" ||
@@ -18,11 +17,12 @@ document.addEventListener("keydown", (event) => {
     event.preventDefault()
   }
 
-
+  ///NumKeys
   if ("0123456789".includes(key)) {
     handleInput(key)
   }
 
+  ///Ops
   else if (key === "+") {
     handleInput("+")
   } else if (key === "-") {
@@ -37,29 +37,30 @@ document.addEventListener("keydown", (event) => {
     handleInput("(")
   } else if (key === ")") {
     handleInput(")")
+  } else if (key === "^") {
+    addPowerOperator()
   } else if (key === "%") {
     handlePercentage()
   }
 
-  // Sepcialkeys
+  /// specialKeys
   else if (key === "Enter" || key === "=") {
     calculateExpression()
   } else if (key === "Backspace") {
     backspc()
   } else if (key === "Delete" || key === "Escape") {
     clearScreen()
-  } else if (key === "^") {
-    addPowerOperator()
   }
 
-  // Handle keyboard shortcuts
+  /// hotkeys
   else if (event.ctrlKey && key === "h") {
-    // Ctrl+H 
+    // Ctrl+H to clear history
     event.preventDefault()
     clearHistory()
   }
 })
 
+// Uni-input handler
 function handleInput(value) {
   if (value === "×") {
     value = "*"
@@ -79,7 +80,6 @@ function handleInput(value) {
   }
 }
 
-// Handle percent separately
 function handlePercentage() {
   if (screen.value && screen.value !== "0" && screen.value !== "Error") {
     try {
@@ -91,12 +91,13 @@ function handlePercentage() {
   }
 }
 
+// Update button event listeners to use the unihandler
 for (const item of btn) {
   item.addEventListener("click", (e) => {
     const btntext = e.target.innerText
 
     if (btntext === "POST" || btntext === "PRE") {
-      return // on prog
+      return // Do nothing for now
     }
 
     if (btntext == "%") {
@@ -118,6 +119,7 @@ function calculateExpression() {
     const originalExpression = screen.value
     let expression = screen.value.replace(/×/g, "*").replace(/÷/g, "/")
 
+    /// powerfunc - supports any exponent
     while (expression.includes("^")) {
       const powerMatch = expression.match(/(\d+(?:\.\d+)?)\^(\d+(?:\.\d+)?)/)
       if (powerMatch) {
@@ -134,7 +136,7 @@ function calculateExpression() {
 
     // Check if result is valid
     if (!isFinite(result)) {
-      throw new Error("Invalid calculation")
+      throw new Error("Invalid!")
     }
 
     addToHistory(originalExpression, result.toString())
@@ -162,28 +164,6 @@ function clearScreen() {
   screen.value = "0"
 }
 
-function pow() {
-  try {
-    if (!screen.value || screen.value === "Error" || screen.value === "0") {
-      screen.value = "Error"
-      return
-    }
-
-    const originalExpression = screen.value + "²"
-    const result = Math.pow(Number.parseFloat(screen.value), 2)
-
-    if (!isFinite(result)) {
-      throw new Error("Invalid calculation")
-    }
-
-    addToHistory(originalExpression, result.toString())
-    screen.value = result.toString()
-  } catch (error) {
-    screen.value = "Error"
-    console.error("Power calculation error:", error)
-  }
-}
-
 function addPowerOperator() {
   if (screen.value === "0" || screen.value === "Error") {
     screen.value = "^"
@@ -192,7 +172,7 @@ function addPowerOperator() {
   }
 }
 
-//// Pos-Negative toggle btn
+//// Posi-Negative toggle btn
 function toggleSign() {
   if (screen.value === "0" || screen.value === "" || screen.value === "Error") return
 
@@ -272,7 +252,6 @@ function clearHistory() {
   updateHistoryDisplay()
 }
 
-// Initialize history display and screen
 updateHistoryDisplay()
 
 /// history **
