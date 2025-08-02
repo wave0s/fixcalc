@@ -27,6 +27,7 @@
                 <button class="btn">8</button>
                 <button class="btn">9</button>
                 <button class="btn">÷</button>
+                <button class="btn">POST</button>
             </div>
 
             <div class="row">
@@ -34,6 +35,7 @@
                 <button class="btn">5</button>
                 <button class="btn">6</button>
                 <button class="btn">×</button>
+                <button class="btn">PRE</button>
             </div>
 
             <div class="row">
@@ -41,16 +43,31 @@
                 <button class="btn">2</button>
                 <button class="btn">3</button>
                 <button class="btn">-</button>
+                <button class="btn">%</button>
             </div>
 
             <div class="row">
                
-                <button class="btn">+/- </button>
+                <button id="pos-neg" onclick="toggleSign()">+/-</button>
                 <button class="btn">0</button>
                 <button class="btn">.</button>
                 <button class="btn">+</button>
                 <button id="eval" onclick="screen.value=eval(screen.value)">=</button>
                 
+            </div>
+        </div>
+    </div>
+    
+    <div class="history-panel">
+            <div class="history-header">
+                <h3>History</h3>
+                <button id="clear-history" onclick="clearHistory()">Clear</button>
+            </div>
+            <div class="history-content" id="history-content">
+                <div class="no-history">
+                    <p>No calculations yet</p>
+                    
+                </div>
             </div>
         </div>
     </div>
