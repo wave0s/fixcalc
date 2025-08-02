@@ -1,56 +1,279 @@
-var screen = document.querySelector('#screen');
-    var btn = document.querySelectorAll('.btn');
+var screen = document.querySelector("#screen")
+var btn = document.querySelectorAll(".btn")
+var historyContent = document.querySelector("#history-content")
+var calculatorHistory = []
 
-    for (item of btn) {
-        item.addEventListener('click', (e) => {
-            btntext = e.target.innerText;
+screen.value = "0"
 
-            if (btntext == '×') {
-                btntext = '*';
-            }
+// Keys eventlistener
+document.addEventListener("keydown", (event) => {
+  const key = event.key
+  if (
+    "0123456789+-*/.=()".includes(key) ||
+    key === "Enter" ||
+    key === "Backspace" ||
+    key === "Delete" ||
+    key === "Escape"
+  ) {
+    event.preventDefault()
+  }
 
-            if (btntext == '÷') {
-                btntext = '/';
-            }
-            screen.value += btntext;
-        });
-    }
-     function backspc() {
-        screen.value = screen.value.substr(0, screen.value.length - 1);
-    }
 
-    function pow() {
-        screen.value = Math.pow(screen.value, 2);
-    }
-    //// Pos-Negative toggle btn 
-    function toggleSign() {
-    if (screen.value === '0' || screen.value === '') return;
+  if ("0123456789".includes(key)) {
+    handleInput(key)
+  }
 
-    /// checks the if last number is valid 
-    const lastNumberMatch = screen.value.match(/([-+]?\d*\.?\d+)$/);
+  else if (key === "+") {
+    handleInput("+")
+  } else if (key === "-") {
+    handleInput("-")
+  } else if (key === "*") {
+    handleInput("×")
+  } else if (key === "/") {
+    handleInput("÷")
+  } else if (key === ".") {
+    handleInput(".")
+  } else if (key === "(") {
+    handleInput("(")
+  } else if (key === ")") {
+    handleInput(")")
+  } else if (key === "%") {
+    handlePercentage()
+  }
 
-    if (lastNumberMatch) {
-        /// this smwhat ensures na once you click the sign button 
-        const lastNumber = lastNumberMatch[1];
-        const beforeLastNumber = screen.value.slice(0, screen.value.lastIndexOf(lastNumber));
+  // Sepcialkeys
+  else if (key === "Enter" || key === "=") {
+    calculateExpression()
+  } else if (key === "Backspace") {
+    backspc()
+  } else if (key === "Delete" || key === "Escape") {
+    clearScreen()
+  } else if (key === "^") {
+    addPowerOperator()
+  }
 
-        let newNumber;
-        //gna check nya if the input is either positive/negative then changes its sign after 
-        if (lastNumber.startsWith('-')) {
-            newNumber = lastNumber.slice(1);
-        } else {
-            newNumber = '-' + lastNumber;
-        }
+  // Handle keyboard shortcuts
+  else if (event.ctrlKey && key === "h") {
+    // Ctrl+H 
+    event.preventDefault()
+    clearHistory()
+  }
+})
 
-        screen.value = beforeLastNumber + newNumber;
+function handleInput(value) {
+  if (value === "×") {
+    value = "*"
+  }
+  if (value === "÷") {
+    value = "/"
+  }
+
+  if (screen.value === "0" || screen.value === "Error") {
+    if (value !== ".") {
+      screen.value = value
     } else {
-        /// safety net if toggle algo cnat find valid num
-        if (screen.value.startsWith('-')) {
-            screen.value = screen.value.slice(1);
-        } else {
-            screen.value = '-' + screen.value;
-        }
+      screen.value = "0."
     }
+  } else {
+    screen.value += value
+  }
 }
+
+// Handle percent separately
+function handlePercentage() {
+  if (screen.value && screen.value !== "0" && screen.value !== "Error") {
+    try {
+      const result = Number.parseFloat(screen.value) / 100
+      screen.value = result.toString()
+    } catch (error) {
+      screen.value = "Error"
+    }
+  }
+}
+
+for (const item of btn) {
+  item.addEventListener("click", (e) => {
+    const btntext = e.target.innerText
+
+    if (btntext === "POST" || btntext === "PRE") {
+      return // on prog
+    }
+
+    if (btntext == "%") {
+      handlePercentage()
+      return
+    }
+
+    handleInput(btntext)
+  })
+}
+
+function calculateExpression() {
+  try {
+    if (!screen.value || screen.value === "Error") {
+      screen.value = "Error"
+      return
+    }
+
+    const originalExpression = screen.value
+    let expression = screen.value.replace(/×/g, "*").replace(/÷/g, "/")
+
+    while (expression.includes("^")) {
+      const powerMatch = expression.match(/(\d+(?:\.\d+)?)\^(\d+(?:\.\d+)?)/)
+      if (powerMatch) {
+        const base = Number.parseFloat(powerMatch[1])
+        const exponent = Number.parseFloat(powerMatch[2])
+        const result = Math.pow(base, exponent)
+        expression = expression.replace(powerMatch[0], result.toString())
+      } else {
+        break
+      }
+    }
+
+    const result = eval(expression)
+
+    // Check if result is valid
+    if (!isFinite(result)) {
+      throw new Error("Invalid calculation")
+    }
+
+    addToHistory(originalExpression, result.toString())
+    screen.value = result.toString()
+  } catch (error) {
+    screen.value = "Error"
+    console.error("Calculation error:", error)
+  }
+}
+
+function backspc() {
+  if (screen.value === "Error") {
+    screen.value = "0"
+    return
+  }
+
+  if (screen.value.length > 1) {
+    screen.value = screen.value.substr(0, screen.value.length - 1)
+  } else {
+    screen.value = "0"
+  }
+}
+
+function clearScreen() {
+  screen.value = "0"
+}
+
+function pow() {
+  try {
+    if (!screen.value || screen.value === "Error" || screen.value === "0") {
+      screen.value = "Error"
+      return
+    }
+
+    const originalExpression = screen.value + "²"
+    const result = Math.pow(Number.parseFloat(screen.value), 2)
+
+    if (!isFinite(result)) {
+      throw new Error("Invalid calculation")
+    }
+
+    addToHistory(originalExpression, result.toString())
+    screen.value = result.toString()
+  } catch (error) {
+    screen.value = "Error"
+    console.error("Power calculation error:", error)
+  }
+}
+
+function addPowerOperator() {
+  if (screen.value === "0" || screen.value === "Error") {
+    screen.value = "^"
+  } else {
+    screen.value += "^"
+  }
+}
+
+//// Pos-Negative toggle btn
+function toggleSign() {
+  if (screen.value === "0" || screen.value === "" || screen.value === "Error") return
+
+  /// checks the if last number is valid
+  const lastNumberMatch = screen.value.match(/([-+]?\d*\.?\d+)$/)
+
+  if (lastNumberMatch) {
+    /// this smwhat ensures na once you click the sign button, only the latest input is being process...
+    ///not the whole expression
+    const lastNumber = lastNumberMatch[1]
+    const beforeLastNumber = screen.value.slice(0, screen.value.lastIndexOf(lastNumber))
+
+    let newNumber
+    //gna check nya if the input is either positive/negative then changes its sign after
+    if (lastNumber.startsWith("-")) {
+      newNumber = lastNumber.slice(1)
+    } else {
+      newNumber = "-" + lastNumber
+    }
+
+    screen.value = beforeLastNumber + newNumber
+  } else {
+    /// safety net if toggle algo cnat find valid num
+    if (screen.value.startsWith("-")) {
+      screen.value = screen.value.slice(1)
+    } else {
+      screen.value = "-" + screen.value
+    }
+  }
+}
+
+function addToHistory(expression, result) {
+  const historyItem = {
+    expression: expression,
+    result: result,
+    timestamp: new Date(),
+  }
+
+  calculatorHistory.unshift(historyItem)
+  if (calculatorHistory.length > 10) {
+    calculatorHistory = calculatorHistory.slice(0, 10)
+  }
+
+  updateHistoryDisplay()
+}
+
+function updateHistoryDisplay() {
+  if (calculatorHistory.length === 0) {
+    historyContent.innerHTML = `
+            <div class="no-history">
+                <p>No calculations yet</p>
+                <p class="sub-text">Your calculation history will appear here</p>
+            </div>
+        `
+    return
+  }
+
+  let historyHTML = ""
+  calculatorHistory.forEach((item, index) => {
+    historyHTML += `
+            <div class="history-item" onclick="useHistoryResult('${item.result}')">
+                <div class="history-expression">${item.expression}</div>
+                <div class="history-result">= ${item.result}</div>
+            </div>
+        `
+  })
+
+  historyContent.innerHTML = historyHTML
+}
+
+function useHistoryResult(result) {
+  screen.value = result
+}
+
+function clearHistory() {
+  calculatorHistory = []
+  updateHistoryDisplay()
+}
+
+// Initialize history display and screen
+updateHistoryDisplay()
+
 /// history **
 /// Main algo -notation func
